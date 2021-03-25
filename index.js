@@ -9,14 +9,86 @@
  for you to use if you need it!
  */
 
-let allWagesFor = function () {
-    let eligibleDates = this.timeInEvents.map(function (e) {
-        return e.date
-    })
-
-    let payable = eligibleDates.reduce(function (memo, d) {
-        return memo + wagesEarnedOnDate.call(this, d)
-    }.bind(this), 0) // <== Hm, why did we need to add bind() there? We'll discuss soon!
-
-    return payable
+function createEmployeeRecord(array) {
+  return {
+    firstName: array[0],
+    familyName: array[1],
+    title: array[2],
+    payPerHour: array[3],
+    timeInEvents: [],
+    timeOutEvents: [],
+  };
 }
+
+function createEmployeeRecords(employeesArray) {
+  return employeesArray.map(function (newEmployee) {
+    return createEmployeeRecord(newEmployee);
+  });
+}
+
+let createTimeInEvent = function (dateTimeStamp) {
+  let date;
+  let hour;
+  [date, hour] = dateTimeStamp.split(" ");
+
+  this.timeInEvents.push({
+    type: "TimeIn",
+    hour: parseInt(hour, 10),
+    date,
+  });
+
+  return this;
+};
+
+function createTimeOutEvent(dateStamp) {
+  let date;
+  let hour;
+  [date, hour] = dateStamp.split(" ");
+
+  this.timeOutEvents.push({
+    type: "TimeOut",
+    hour: parseInt(hour, 10),
+    date,
+  });
+
+  return this;
+}
+
+function hoursWorkedOnDate(date) {
+  let timeIn = this.timeInEvents.find(function (e) {
+    return e.date === date;
+  });
+  let timeOut = this.timeOutEvents.find(function (e) {
+    return e.date === date;
+  });
+  return (timeOut.hour - timeIn.hour) / 100;
+}
+
+function wagesEarnedOnDate(date) {
+  let wagesEarned = hoursWorkedOnDate.call(this, date) * this.payPerHour;
+  return parseFloat(wagesEarned.toString());
+}
+
+let allWagesFor = function () {
+  let eligibleDates = this.timeInEvents.map(function (e) {
+    return e.date;
+  });
+
+  let payable = eligibleDates.reduce(
+    function (memo, d) {
+      return memo + wagesEarnedOnDate.call(this, d);
+    }.bind(this),
+    0
+  ); // <== Hm, why did we need to add bind() there? We'll discuss soon!
+
+  return payable;
+};
+function findEmployeeByFirstName(srcArray, firstName) {
+  return srcArray.find((e) => e.firstName === firstName);
+}
+
+let calculatePayroll = function (arrayOfEmployeeRecords) {
+  return arrayOfEmployeeRecords.reduce(function (memo, rec) {
+    return memo + allWagesFor.call(rec);
+  }, 0);
+};
